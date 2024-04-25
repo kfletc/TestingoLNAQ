@@ -1,3 +1,6 @@
+# mnist_reader.py
+# loads fasion_mnist data into tensorflow tensors
+
 def load_mnist(path, kind='train'):
     import os
     import gzip

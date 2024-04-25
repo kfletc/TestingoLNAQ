@@ -1,3 +1,6 @@
+# network.py
+# contains functions for initializing weights, classes that represent types of neural network layers
+# and a CNN class that defines the structure and forward pass of the convolutional neural network
 
 import tensorflow as tf
 
@@ -53,7 +56,7 @@ class ConvLayer(tf.Module):
         # layer computation on call
         # initialize layer if not initialized
         if not self.built:
-            self.in_dim = x.shape[2]
+            self.in_dim = x.shape[3]
             self.kernel = tf.Variable(self.weight_init((self.in_dim, self.out_dim), self.kernel_size))
             # biases can be initialized to 0
             self.b = tf.Variable(tf.zeros(shape=(self.out_dim,)))
@@ -65,22 +68,20 @@ class ConvLayer(tf.Module):
 class CNN(tf.Module):
     def __init__(self, name=None):
         super().__init__(name=name)
+        # specify layers in model
+        self.conv_layer_1 = ConvLayer(16, 3, activation=tf.nn.relu)
+        self.conv_layer_2 = ConvLayer(32, 3, activation=tf.nn.relu)
+        self.connected_layer_1 = FullyConnectedLayer(100, activation=tf.nn.relu)
+        self.connected_layer_2 = FullyConnectedLayer(10)
 
     @tf.function
     def __call__(self, x, preds=False):
-        # specify layers in model
-        conv_layer_1 = ConvLayer(16, 3, activation=tf.nn.relu)
-        conv_layer_2 = ConvLayer(32, 3, activation=tf.nn.relu)
-        connected_layer_1 = FullyConnectedLayer(100, activation=tf.nn.relu)
-        connected_layer_2 = FullyConnectedLayer(10)
-
         # forward pass through layers
-        x_output = conv_layer_1(x)
-        x_output = conv_layer_2(x_output)
+        x_output = self.conv_layer_1(x)
+        x_output = self.conv_layer_2(x_output)
         x_output = tf.nn.max_pool2d(x_output, 2, 2, 'VALID')
         x_output = tf.nn.dropout(x_output, 0.25)
         x_output = tf.reshape(x_output, [-1, 4608])
-        x_output = connected_layer_1(x_output)
-        x_output = tf.nn.dropout(x_output, 0.25)
-        x_output = connected_layer_2(x_output)
+        x_output = self.connected_layer_1(x_output)
+        x_output = self.connected_layer_2(x_output)
         return x_output
